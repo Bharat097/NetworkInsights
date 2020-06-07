@@ -1,0 +1,444 @@
+<dashboard script="hide.js,html_input_date_control.js" hideSplunkBar="true" stylesheet="highlight.css">
+  <label>Operations Summary</label>
+  <fieldset autoRun="false" submitButton="true">
+ <html>
+         <style>
+           .dateContainer{
+             display:flex;
+           }
+           .dateInput{
+             padding-right:15px;
+           } 
+           #submit{
+           padding-right:300px;
+           }
+         </style>
+         <div class="dateContainer">
+           <div class="dateInput">
+             <div>From Date:</div>
+             <input id="inputFromDate" type="date"/>
+           </div>
+           <div class="dateInput">
+             <div>To Date:</div>
+             <input id="inputToDate" type="date"/>
+           </div>
+         </div>
+       </html>
+     </fieldset>
+  <row>
+    <panel>
+      <title>Current Associated WiFi Clients</title>
+      <single>
+        <title>Total number of WiFi clients currently associated across all access points.</title>
+        <search>
+          <query>index="raw_site1"  source="matrix" kpi="clientCount" device="*_Sum" value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| stats count,latest(value) AS Associated 
+| eval Associated=if(count==0,0,Associated)
+| fields - count</query>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Current Clients @ 5 GHz</title>
+      <single>
+        <title>Number of WiFi clients currently associated to 5 GHz radios</title>
+        <search>
+          <query>index="raw_site1"  source="matrix" kpi="clientCount_5GHz" device="*_Sum" value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | stats count,latest(value) as "Associated" | eval Associated=if(count==0,0,Associated) |  fields - count</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Current Clients @ 2.4 GHz</title>
+      <single>
+        <title>Number of WiFi clients currently associated to 2.4 GHz radios</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="clientCount_2.4GHz" device="*_Sum" value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | stats count,latest(value) as "Associated" | eval Associated=if(count==0,0,Associated) |  fields - count</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Total Traffic across all AP Ethernet interfaces.</title>
+      <single>
+        <title>Total traffic across all AP ethernet interfaces.</title>
+        <search>
+          <query>index="raw_site1" source="matrix" kpi=ethThroughputWLC_*X  device=*_Sum  value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| eval localTimeZone = strftime(time(),"%Z")
+| eval _time = case((localTimeZone == "EDT" OR localTimeZone == "EST" OR localTimeZone == "IST"), _time, (localTimeZone == "CDT" OR localTimeZone == "CST"), _time+3600, (localTimeZone == "MDT" OR localTimeZone == "MST"), _time+(3600*2), (localTimeZone == "PDT" OR localTimeZone == "PST"), _time+(3600*3)) 
+| eval dayEvent = strftime(_time,"%Y-%m-%d")
+| eval dayToday = strftime(now(),"%Y-%m-%d")
+| stats avg(value) as value  by kpi 
+| eval localTimeZone = strftime(time(),"%Z")
+| eval todayHours=strftime(now(),"%H") 
+| eval todayHours = case((localTimeZone == "EDT" OR localTimeZone == "EST" OR localTimeZone == "IST"), todayHours, (localTimeZone == "CDT" OR localTimeZone == "CST"), todayHours+1, (localTimeZone == "MDT" OR localTimeZone == "MST"), todayHours+2, (localTimeZone == "PDT" OR localTimeZone == "PST"), todayHours+3) 
+| eval value=((value/8)*todayHours*3600)/1024 
+| fields - todayHours 
+| stats sum(value) as "Total GB"
+| eval "Total GB"=round('Total GB',2)</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="unit">GB</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>AP Status &lt; 24 Hours</title>
+      <single>
+        <title>AP's with up time &lt; 24h</title>
+        <search>
+          <query>index=raw_global source="*PRIME_AccessPointDetailsAPIDivided" reachabilityStatus=REACHABLE timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| dedup name 
+| eval upTime=if(isnull(upTime),0,upTime) 
+| where upTime &lt; 8640000 
+| stats count</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>AP's Unreachable</title>
+      <single>
+        <title>AP's unreachability status : unreachable or ping unreachable</title>
+        <search>
+          <query>index=raw_global source="*PRIME_AccessPointDetailsAPIDivided" timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"|eval key = 1 | dedup macAddress | stats count(macAddress) as anything | join [|inputlookup devices.csv| eval key = 1| stats count as new ] | eval diff = new-anything | table diff</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>RF Bands for Selected Date Range</title>
+      <chart>
+        <title>Number of associated client devices by RF band</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount_2.4GHz OR kpi=clientCount_5GHz (NOT kpi=*:*) kpi!=clientCount_state* kpi!=clientCount_probing device="*_Sum" value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| replace "clientCount_2.4GHz" with "2.4GHz" in kpi 
+| replace "clientCount_5GHz" with "5GHz" in kpi 
+| timechart latest(value) span=10m as value by kpi 
+| rename kpi as Band 
+| rename value as Value</query>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Clients</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisNone</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>SSIDs</title>
+      <chart>
+        <title>Number of client devices by SSID</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount:* value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | 
+eval SSID=mvindex(split(kpi,":"),1) | stats latest(value) as value by device, SSID | stats sum(value) as value by SSID| eval value = floor(value)
+ | rename value as Devices</query>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>AP Ethernet Interface Traffic for Selected Date Range</title>
+      <chart>
+        <title>Rate of Traffic recieved &amp; transmitted by all AP ethernet interfaces</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_*X device=*_Sum value!=null value!=0 timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| timechart sum(value) as Mbps by kpi 
+| rename ethThroughputWLC_RX as "Receive(Mbps)", ethThroughputWLC_TX as "Transmit(Mbps)"</query>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Mbps</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Client Count for Selected Date Range</title>
+      <chart>
+        <title>The top 10 access points based on the number of client devices associated to both radios</title>
+        <search>
+          <query>index = raw_site1 source="matrix" kpi=clientCount  device!=*_Sum* device!=*_Avg* device!=ATLADMWLC01 device!="*ATL_ADMIN_Sum" device=* value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | sort -value | dedup device | head 10  | chart max(value) AS "Client Count" by device | RENAME device AS "Access Point" | sort - "Client Count"</query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Zero Channel Utilization Access Points @ 2.4GHz Details</title>
+      <table>
+        <title>Number of access points 2.4GHz Radios with no channel Utilization</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="rf_channelUtilization_2.4GHz" device!=*_Sum* device!=*_Avg* device=* value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| stats sum(value) as TotalCU24 by device 
+| where TotalCU24 = 0 
+| table device 
+| rename device AS Device</query>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Zero Channel Utilization Access Points @ 5GHz Details</title>
+      <table>
+        <title>Number of access points 5GHz Radios with no channel Utilization</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="rf_channelUtilization_5GHz" device!=*_Sum* device!=*_Avg* device=* value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" 
+| stats sum(value) as TotalCU24 by device 
+| where TotalCU24 = 0 
+| table device 
+| rename device AS Device</query>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Channel Change Top 10 AP @ 2.4GHz</title>
+      <chart>
+        <title>The top 10 access points with changed channels</title>
+        <search>
+          <query>index=raw_site1 sourcetype=log kpi=rf_channel_2.4GHz log_type=kpi device=* message="*value changed from*" timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| stats count by device 
+| sort -count 
+| head 10 
+| rename device As "Access Point", count As "Count"</query>
+        </search>
+        <option name="charting.axisTitleX.text">Access Points</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">285</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Channel Change Top 10 AP @ 5GHz</title>
+      <chart>
+        <title>The top 10 access points with changed channels</title>
+        <search>
+          <query>index=raw_site1 sourcetype=log kpi=rf_channel_5GHz log_type=kpi device=* message="*value changed from*" timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| stats count by device 
+| sort -count 
+| head 10 
+| rename device As "Access Point", count As "Count"</query>
+        </search>
+        <option name="charting.axisTitleX.text">Access Points</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Channel Change Top 10 Channels @ 2.4GHz</title>
+      <table>
+        <title>The top 10 channels changed</title>
+        <search>
+          <query>index=raw_site1 sourcetype=log kpi=rf_channel_2.4GHz log_type=kpi device=* message="*value changed from*" timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| rex "\"message\":\s+\"value changed from\s+(?&lt;channelFrom&gt;\d*)\s+to\s+(?&lt;channelTo&gt;\d*)" 
+| stats count by channelFrom 
+| sort - count 
+| head 10 
+| rename channelFrom as "Channel", count as "Count"</query>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Channel Change Top 10 Channels @ 5GHz</title>
+      <table>
+        <title>The top 10 channels changed</title>
+        <search>
+          <query>index=raw_site1 sourcetype=log kpi=rf_channel_5GHz log_type=kpi device=* message="*value changed from*" timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"
+| rex "\"message\":\s+\"value changed from\s+(?&lt;channelFrom&gt;\d*)\s+to\s+(?&lt;channelTo&gt;\d*)" 
+| stats count by channelFrom 
+| sort - count 
+| head 10 
+| rename channelFrom as "Channel", count as "Count"</query>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Wireless Clients - Total for the Date</title>
+      <table>
+        <title>Number of Client Devices Associated</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="clientCount_*GHz" device="*_Sum" timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | timechart max(value) span=1d by kpi |eval Total='clientCount_2.4GHz'+clientCount_5GHz|eval Date=strftime(_time,"%Y-%m-%d")|sort - Date|table Date clientCount_2.4GHz clientCount_5GHz Total| rename clientCount_2.4GHz AS "2.4GHz",clientCount_5GHz AS "5GHz" | fillnull value=0 </query>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Wireless Clients - Peak Concurrent Connections for the Date</title>
+      <table>
+        <title>Number of Client Devices Associated</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="clientCount_*GHz" device="*_Sum" timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"| timechart span=5m max(value) as value by kpi | eval totalCount = 'clientCount_2.4GHz' + clientCount_5GHz | eval day=strftime(_time,"%Y-%m-%d") | eventstats max(totalCount) as maxTotalCount by day| fillnull value=0 | eval maxFieldCalc = day.":".maxTotalCount | eval fieldCalc = day.":".totalCount | where maxFieldCalc = fieldCalc |dedup day| table day, clientCount_2.4GHz, clientCount_5GHz, maxTotalCount|sort - day | rename day as Date, clientCount_2.4GHz as "2.4GHz", clientCount_5GHz as "5GHz", maxTotalCount as Total</query>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Network Traffic Rate Entering &amp; Exiting - Average for the Day</title>
+      <table>
+        <title>Rate of traffic received and transmitted to the network point-of-presence</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_*X device=*_Avg value!=-* timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | timechart span=1d avg(value) as Mbps by kpi | eval Date=strftime(_time,"%Y-%m-%d") 
+| sort - Date 
+| table Date ethThroughputWLC_RX ethThroughputWLC_TX| rename ethThroughputWLC_RX as "Receive(Mbps)", ethThroughputWLC_TX as "Transmit(Mbps)"
+|fillnull value=0</query>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Network Traffic Rate Entering &amp; Exiting - Peak for the Day</title>
+      <table>
+        <title>Rate of traffic received and transmitted to the network point-of-presence</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_*X device=*_Avg value!=-* timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | timechart span=1d max(value) as Mbps by kpi | eval Date=strftime(_time,"%Y-%m-%d") 
+| sort - Date 
+| table Date ethThroughputWLC_RX ethThroughputWLC_TX| rename ethThroughputWLC_RX as "Receive(Mbps)", ethThroughputWLC_TX as "Transmit(Mbps)"
+|fillnull value=0</query>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+ <row>
+    <panel>
+      <title>RF Entering Traffic Volume</title>
+      <chart>
+        <title>Traffic volume received over RF</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_RX  device="*_Sum" value!=-* timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"| eval dateDay=strftime(_time,"%Y-%m-%d") | stats avg(value) as tbps by dateDay | eval tbps=tbps/1048576 | eval secondsPast=now()-strptime(dateDay,"%Y-%m-%d") | eval TB=if(dateDay != strftime(now(),"%Y-%m-%d"),(tbps/8)*86400,(tbps/8)*secondsPast) | table dateDay, TB | rename dateDay as Date| sort - Date | eval TB=round(TB,2)|rename TB as " Received Traffic Volume(TB)"</query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>RF Exiting Traffic Volume</title>
+      <chart>
+        <title>Traffic volume transmitted over RF</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_TX  device="*_Sum" value!=-* timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"| eval dateDay=strftime(_time,"%Y-%m-%d") | stats avg(value) as tbps by dateDay | eval tbps=tbps/1048576 | eval secondsPast=now()-strptime(dateDay,"%Y-%m-%d") | eval TB=if(dateDay != strftime(now(),"%Y-%m-%d"),(tbps/8)*86400,(tbps/8)*secondsPast) | table dateDay, TB | rename dateDay as Date| sort - Date | eval TB=round(TB,2)|rename TB as " Transmitted Traffic Volume(TB)"</query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>RF Entering &amp; Exiting Traffic Volume</title>
+      <chart>
+        <title>Traffic volume received &amp; transmitted over RF</title>
+        <search>
+          <query>index=raw_site1 source="matrix" (kpi=ethThroughputWLC_TX OR kpi=ethThroughputWLC_RX)  device="*_Sum" value!=-* timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"| eval dateDay=strftime(_time,"%Y-%m-%d") | stats avg(value) as tbps by dateDay | eval tbps=tbps/1048576 | eval secondsPast=now()-strptime(dateDay,"%Y-%m-%d") | eval TB=if(dateDay != strftime(now(),"%Y-%m-%d"),(tbps/8)*86400,(tbps/8)*secondsPast) | table dateDay, TB | rename dateDay as Date| sort - Date | eval TB=round(TB,2)|rename TB as " Traffic Volume(TB)"</query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Associated Clients</title>
+      <chart>
+        <title>Associated Client Count per Day by SSID</title>
+        <search>
+          <query>
+            index=raw_site1 source="matrix"  kpi=clientCount:* value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$"  | timechart useother=f span=1d max(value) as value by kpi
+| untable _time, kpi, value
+| eval SSID=mvindex(split(kpi,":"),1)
+| sort - value
+| timechart useother=f span=1d sum(value) as Devices by SSID
+          </query>
+        </search>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Highest Channel Utilization @ 2.4GHz</title>
+      <chart>
+        <title>Top 10 access points with highest channel utilization @ 2.4GHz</title>
+        <search>
+          <query>index=raw_site1 source="matrix"  kpi=rf_channelUtilization_2.4GHz  device!=*_Sum* device!=*_Avg* device=* value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | dedup device |sort -value |  head 10 | chart max(value) AS "Channel Utilization (%)" by device | RENAME device AS "Access Points" | sort - "Channel Utilization (%)"</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Highest Channel Utilization @ 5GHz</title>
+      <chart>
+        <title>Top 10 access points with highest channel utilization @ 5GHz</title>
+        <search>
+          <query>index=raw_site1 source="matrix"  kpi=rf_channelUtilization_5GHz  device!=*_Sum* device!=*_Avg* device=* value!=null timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | dedup device |sort -value |  head 10 | chart max(value) AS "Channel Utilization (%)" by device | RENAME device AS "Access Points" | sort - "Channel Utilization (%)"</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+ <row>
+    <panel>
+      <title>AP Status</title>
+      <chart>
+        <title>AP's online for the Data</title>
+        <search>
+          <query>index=raw_global source="*PRIME_AccessPointDetailsAPIDivided" "unifiedApInfo.controllerName"=wlc01.raw2	reachabilityStatus=REACHABLE timeformat="%Y-%m-%d" earliest="$tokFromDate$" latest="$tokToDate$" | eval Date=strftime(_time,"%Y-%m-%d") | stats dc(macAddress) as "Device Online" by Date | sort - Date</query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+</dashboard>

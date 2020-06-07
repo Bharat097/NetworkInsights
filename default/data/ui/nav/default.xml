@@ -1,0 +1,30 @@
+<nav search_view="search">
+	<view name="executive_dashboard" />
+	<view name="site1" default="true" />
+	<collection label="Clients">
+		<view name="associated" />
+	</collection>
+	<collection label="Net Infrastructure">
+		<view name="device_inventory" />
+		<view name='throughput'/>
+		<view name='top_access_points'/>
+	</collection>
+	<collection label="Net Conditions">
+		<view name="net_conditions" />
+		<view name='alarms'/>
+	</collection>
+	<collection label='Reports'>
+  	<view name='operations_summary'/>
+  </collection>
+  	<collection label="Search">
+		<view name="client_search" />
+	</collection>
+	<collection label="Locations">
+		<a href="/app/networkinsights2interns">
+			Site 1
+		</a>
+	</collection>
+  <collection label="Session">
+    <a href="/account/logout"> Logout</a>
+  </collection>
+</nav>

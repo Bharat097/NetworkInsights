@@ -1,0 +1,183 @@
+<dashboard script="highlighting.js,hide.js" hideSplunkBar="true" stylesheet="highlight.css">
+  <label>Alarms</label>
+  <description>Availability and Status of Monitored Network Devices</description>
+  <row>
+    <panel>
+      <title>Critical Server Availability</title>
+      <chart>
+        <title>Number of monitored servers that are reachable</title>
+        <search>
+          <query>index=raw_site1 source="*Nagios_Status*" (source!="*Nagios_Status_AMGENusto*") 
+| sort -_time 
+| dedup source 
+| rename data.host.plugin_output as myMessage 
+| eval myStatus=if(myMessage LIKE "%ERROR%" OR myMessage LIKE "%CRITICAL%" OR myMessage LIKE "%DOWN%","CRITICAL",if(myMessage LIKE "%WARNING%","WARNING","OK")) 
+| stats count(myStatus) as counter by myStatus 
+| RENAME myStatus as "Status",counter AS "Devices"</query>
+          <earliest>-4h@m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Detailed Availability Status</title>
+      <table>
+        <title>Status of monitored devices</title>
+        <search>
+          <query>index=raw_site1 source="*Nagios_Status*" 
+| sort -_time 
+| dedup source
+| rename data.host.name as name
+| rename data.host.plugin_output as message
+| rename  "data.host.last_check " as last_check
+| rename  data.host.last_update as last_update
+| rename  data.host.last_time_down  as last_down_time
+| transaction name
+| eval last_update=strftime(substr(last_update,1,10),"%Y-%m-%d %H:%M:%S") 
+| eval last_update =if(isnull(last_update),"No Record", last_update)
+| eval last_check =strftime(substr(last_check,1,10),"%Y-%m-%d %H:%M:%S")
+| eval last_check =if(isnull(last_check),"", last_check)
+| eval last_down_time =if(last_down_time==0,null,strftime(substr(last_down_time,1,10),"%Y-%m-%d %H:%M:%S"))
+| eval last_down_time =if(isnull(last_down_time),"No DownTime", last_down_time) 
+| table name,message, last_update, last_check,last_down_time</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Network Alarms</title>
+      <single>
+        <title>Number of Network alarms for last 30 days</title>
+        <search>
+          <query>index=raw_global source="*PRIME_CriticalAlarmsDivided*" deviceName=* | dedup @id
+| spath output=myCategory path=category.value | where (myCategory = "System" OR myCategory = "Switches and Hubs" OR myCategory = "Controller" OR myCategory = "AP" OR myCategory = "Security")
+| rex field=nttyaddrss7_address mode=sed "s/\s*//g"
+| where (nttyaddrss7_address="10.11.132.1" OR nttyaddrss7_address="10.11.220.240" OR nttyaddrss7_address="10.11.220.241" OR nttyaddrss7_address="10.11.132.240" OR nttyaddrss7_address="10.11.220.243")  
+| eval epochAlarmFound=alarmFoundAt/1000 
+| eval dateDiffDays=(_time-epochAlarmFound)/86400 | where dateDiffDays &lt; 30
+| stats count as Alarms</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[20,70]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Detailed Network Alarms</title>
+      <table>
+        <title>Status of Network alarms for last 30 days.</title>
+        <search>
+          <query>index=raw_global source="*PRIME_CriticalAlarmsDivided*" deviceName=*
+| dedup @id
+| spath output=myCategory path=category.value | where (myCategory = "System" OR myCategory = "Switches and Hubs" OR myCategory = "Controller" OR myCategory = "AP" OR myCategory = "Security")
+| rex field=nttyaddrss7_address mode=sed "s/\s*//g"
+| where (nttyaddrss7_address="10.11.132.1" OR nttyaddrss7_address="10.11.220.240" OR nttyaddrss7_address="10.11.220.241" OR nttyaddrss7_address="10.11.132.240" OR nttyaddrss7_address="10.11.220.243")
+| eval epochAlarmFound=alarmFoundAt/1000
+| eval dateDiffDays=(_time-epochAlarmFound)/86400 | where dateDiffDays &lt;= 30
+| eval alarmFoundAt =strftime(floor(alarmFoundAt/1000),"%Y-%m-%d %H:%M:%S") 
+| eval last_update =strftime(floor(lastUpdatedAt/1000),"%Y-%m-%d %H:%M:%S") 
+| eval alarmFoundAt =if(isnull(alarmFoundAt),"", alarmFoundAt)
+| eval lastUpdatedAt =if(isnull(lastUpdatedAt),"", lastUpdatedAt)
+| table @displayName,message,alarmFoundAt,last_update | RENAME @displayName AS "Alarm ID", message as "Message", last_update AS "Last Updated", alarmFoundAt as "Alarm FoundAt"</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Data Source Health Status</title>
+      <chart>
+        <title>Data Source Status</title>
+        <search>
+          <query>(index=raw_site1 source=matrix earliest=-1h@h latest=now) 
+OR (index=raw_global source=rest://PRIME* earliest=-24h@h latest=now) 
+    | stats latest(_time) as LastActive by source 
+    | eval LastActive=strftime(LastActive,"%Y-%m-%d %H:%M:%S")
+| fillnull LastActive value="Unknown" 
+| eval LastChecked=now() 
+| eval LastChecked=strftime(LastChecked,"%Y-%m-%d %H:%M:%S") 
+| eval diffHours = (now() - strptime(LastActive,"%Y-%m-%d %H:%M:%S"))/3600 
+| eval Status=if(strptime(LastActive,"%Y-%m-%d %H:%M:%S")=strptime("2016-01-01 00:00:00","%Y-%m-%d %H:%M:%S"),"","") 
+| eval Status=if(source="matrix",if(diffHours>0.5,"ERROR".Status,"OK"),Status) 
+| eval Status=if(source LIKE "rest://PRIME%",if(diffHours>24,"ERROR".Status,"OK"),Status) 
+| eval sourcetype= case( source=="matrix","MATRIX",source LIKE "rest://PRIME%","PRIME") 
+| rename source as Description, LastActive as "Last Active", LastChecked as "Last Checked", sourcetype as "Source Type" 
+| fields - diffHours 
+| replace matrix with "Matrix", "rest://PRIME_AccessPointDetailsAPIDivided*" with "AP Details",
+    "rest://PRIME_CriticalAlarmsDivided*" with "Critical Alarms" in "Description" 
+| stats count as Count by Status</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Data Source Status</title>
+      <table id="highlight">
+        <title>Data Source status Details</title>
+        <search>
+          <query>(index=raw_site1 source=matrix earliest=-1h@h latest=now) 
+OR (index=raw_global source=rest://PRIME* earliest=-24h@h latest=now) 
+    | stats latest(_time) as LastActive by source 
+    | eval LastActive=strftime(LastActive,"%Y-%m-%d %H:%M:%S")
+| fillnull LastActive value="Unknown" 
+| eval LastChecked=now() 
+| eval LastChecked=strftime(LastChecked,"%Y-%m-%d %H:%M:%S") 
+| eval diffHours = (now() - strptime(LastActive,"%Y-%m-%d %H:%M:%S"))/3600 
+| eval Status=if(strptime(LastActive,"%Y-%m-%d %H:%M:%S")=strptime("2016-01-01 00:00:00","%Y-%m-%d %H:%M:%S"),"","") 
+| eval Status=if(source="matrix",if(diffHours>0.5,"ERROR".Status,"OK"),Status) 
+| eval Status=if(source LIKE "rest://PRIME%",if(diffHours>24,"ERROR".Status,"OK"),Status) 
+| eval sourcetype= case( source=="matrix","MATRIX",source LIKE "rest://PRIME%","PRIME") 
+| rename source as Description, LastActive as "Last Active", LastChecked as "Last Checked", sourcetype as "Source Type" 
+| fields - diffHours 
+| replace matrix with "Matrix", "rest://PRIME_AccessPointDetailsAPIDivided*" with "AP Details",
+    "rest://PRIME_CriticalAlarmsDivided*" with "Critical Alarms" in "Description"  
+| table "Description", "Source Type", "Last Active", "Last Checked","Status" 
+| where Status!=""</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Last Checked">
+          <colorPalette type="map"></colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+</dashboard>

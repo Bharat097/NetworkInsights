@@ -1,0 +1,234 @@
+<form script="hide.js" stylesheet="highlight.css" hideSplunkBar="true">
+  <label>Device Inventory</label>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="dropdown" token="ap_group_name" searchWhenChanged="true">
+      <label>AP Group Name</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>unifiedApInfo.apGroupName</fieldForLabel>
+      <fieldForValue>unifiedApInfo.apGroupName</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup unifiedApInfo.apGroupName | table unifiedApInfo.apGroupName</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="ethernet_mac" searchWhenChanged="true">
+      <label>Ethernet Mac</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>ethernetMac</fieldForLabel>
+      <fieldForValue>ethernetMac</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup ethernetMac | table ethernetMac</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="ip_address" searchWhenChanged="true">
+      <label>IP Address</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>ipAddress</fieldForLabel>
+      <fieldForValue>ipAddress</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup ipAddress | table ipAddress</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="ap_name" searchWhenChanged="true">
+      <label>AP Name</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>name</fieldForLabel>
+      <fieldForValue>name</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup name | table name</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="radio_mac_address" searchWhenChanged="true">
+      <label>Radio MAC Address</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>macAddress</fieldForLabel>
+      <fieldForValue>macAddress</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup macAddress | table macAddress</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="serial_number" searchWhenChanged="true">
+      <label>Serial Number</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>serialNumber</fieldForLabel>
+      <fieldForValue>serialNumber</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup serialNumber | table serialNumber</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="neighbor_name" searchWhenChanged="true">
+      <label>Neighbour Name</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>cdpNeighbors.cdpNeighbor.neighborName</fieldForLabel>
+      <fieldForValue>cdpNeighbors.cdpNeighbor.neighborName</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup cdpNeighbors.cdpNeighbor.neighborName | table cdpNeighbors.cdpNeighbor.neighborName</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="wlc_ip_address" searchWhenChanged="true">
+      <label>WLC IP Address</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>unifiedApInfo.controllerIpAddress</fieldForLabel>
+      <fieldForValue>unifiedApInfo.controllerIpAddress</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup unifiedApInfo.controllerIpAddress  | table unifiedApInfo.controllerIpAddress</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="wlc_name" searchWhenChanged="true">
+      <label>WLC Name</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>unifiedApInfo.controllerName</fieldForLabel>
+      <fieldForValue>unifiedApInfo.controllerName</fieldForValue>
+      <search>
+        <query>index=raw_global | dedup unifiedApInfo.controllerName  | table unifiedApInfo.controllerName</query>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="checkbox" token="fields">
+      <label>fields</label>
+      <choice value="apType">AP Type</choice>
+      <choice value="serialNumber">Serial Number</choice>
+      <choice value="ethernetMac">Ethernet MAC</choice>
+      <choice value="ipAddress">IP Address</choice>
+      <choice value="name">AP Name</choice>
+      <choice value="macAddress">Radio MAC Address</choice>
+      <choice value="unifiedApInfo.apGroupName">AP Group Name</choice>
+      <choice value="upTime">Up Time D,H:M:S</choice>
+      <choice value="cdpNeighbors.cdpNeighbor.neighborName">Neighbour Name</choice>
+      <choice value="cdpNeighbors.cdpNeighbor.neighborPort">Neighbour Port</choice>
+      <choice value="unifiedApInfo.controllerName">WLC Name</choice>
+      <choice value="softwareVersion">Software Version</choice>
+      <choice value="unifiedApInfo.controllerIpAddress">WLC IP Address</choice>
+      <choice value="kpi24">ClientCount 2.4GHZ</choice>
+      <choice value="kpi5">ClientCount 5GHZ</choice>
+      <default>apType,serialNumber,ethernetMac,ipAddress,name,macAddress,unifiedApInfo.apGroupName,upTime,cdpNeighbors.cdpNeighbor.neighborName,unifiedApInfo.controllerName,softwareVersion,unifiedApInfo.controllerIpAddress</default>
+      <delimiter> ,</delimiter>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <html>
+      <style>
+        .input-dropdown{ width: 18% !important; }
+        .input-checkbox{ width: 18% !important; }
+      </style>
+    </html>
+      <single>
+        <title>Returned Records</title>
+        <search>
+          <query>index=raw_site1 
+    (source=matrix AND kpi=clientCount_2.4GHz ) OR (source=matrix AND kpi=clientCount_5GHz) 
+| eval kpi24 = if(kpi="clientCount_2.4GHz",value,null()) 
+| eval kpi5 = if(kpi="clientCount_5GHz",value,null()) 
+| rename device as name 
+| join name 
+    [ search index=raw_global source="*PRIME_AccessPointDetailsAPIDivided*" 
+    | dedup macAddress 
+    | spath output=neighborName path=cdpNeighbors.cdpNeighbor.neighborName 
+    | eval neighborName=if(isnull(neighborName),"Empty",neighborName) 
+    | eval name=if(isnull(name),"Empty",name) 
+    | eval serialNumber=if(isnull(serialNumber),"Empty",serialNumber) 
+    | spath output=apGroupName path=unifiedApInfo.apGroupName 
+    | eval apGroupName=if(isnull(apGroupName),"Empty",apGroupName) 
+    | spath output=controllerIpAddress path=unifiedApInfo.controllerIpAddress 
+    | eval controllerIpAddress =if(isnull(controllerIpAddress ),"Empty",controllerIpAddress ) 
+    | spath output=controllerName path=unifiedApInfo.controllerName 
+    | eval controllerName =if(isnull(controllerName ),"Empty",controllerName ) 
+    | search apGroupName="$ap_group_name$" AND ethernetMac="$ethernet_mac$" AND ipAddress="$ip_address$" AND name="$ap_name$" AND macAddress="$radio_mac_address$" AND serialNumber="$serial_number$" AND neighborName="$neighbor_name$" AND controllerIpAddress="$wlc_ip_address$" AND controllerName=$wlc_name$ 
+    | eval seconds=round(if(isnull(upTime),0, upTime)/1000,0) 
+    | eval seconds=round(if(isnull(upTime),0, upTime)/1000,0) 
+    | eval days=floor(seconds/86400) 
+    | eval seconds=seconds-(days*86400) 
+    | eval hours=floor(seconds/3600) 
+    | eval seconds=seconds-(hours*3600) 
+    | eval minutes=floor(seconds/60) 
+    | eval seconds=seconds-(minutes*60) 
+    | eval hours=if(hours &lt; 10,"0".hours,hours) 
+    | eval minutes=if(minutes &lt; 10,"0".minutes,minutes) 
+    | eval seconds=if(seconds &lt; 10,"0". seconds, seconds) 
+    | eval uptime=if(days &gt; 30," &gt; 30 Days",days.", ".hours.":".minutes.":".seconds)] 
+| stats values(apType) as apType values(serialNumber) as serialNumber values(ethernetMac) as ethernetMac values(ipAddress) as ipAddress values(macAddress) as macAddress values(unifiedApInfo.apGroupName) as unifiedApInfo.apGroupName values(upTime) as upTime values(unifiedApInfo.controllerName) as unifiedApInfo.controllerName values(unifiedApInfo.controllerIpAddress) as unifiedApInfo.controllerIpAddress values(cdpNeighbors.cdpNeighbor.neighborName) as cdpNeighbors.cdpNeighbor.neighborName values(softwareVersion) as softwareVersion values(cdpNeighbors.cdpNeighbor.neighborPort) as cdpNeighbors.cdpNeighbor.neighborPort values(kpi24) as kpi24 values(kpi5) as kpi5 values(status) as status by name 
+| TABLE $fields$ 
+| rename apType as "AP Type", serialNumber as "Serial Number", ethernetMac as "Ethernet MAC", ipAddress as "IP Address", name as "AP Name", macAddress as "Radio MAC Address", "unifiedApInfo.apGroupName" as "AP Group Name", uptime as "Up Time D,H:M:S", "unifiedApInfo.controllerName" as "WLC Name", "unifiedApInfo.controllerIpAddress" as "WLC IP Address", "cdpNeighbors.cdpNeighbor.neighborName" as "Neighbor Name",softwareVersion as "Software Version", "cdpNeighbors.cdpNeighbor.neighborPort" as "Neighbor Port",kpi24 as "ClientCount 2.4GHz", kpi5 as "ClientCount 5GHz" status as "Status" 
+| sort "IPAddress" | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>index=raw_site1 
+    (source=matrix AND kpi=clientCount_2.4GHz ) OR (source=matrix AND kpi=clientCount_5GHz) 
+| eval kpi24 = if(kpi="clientCount_2.4GHz",value,null()) 
+| eval kpi5 = if(kpi="clientCount_5GHz",value,null()) 
+| rename device as name 
+| join name 
+    [ search index=raw_global source="*PRIME_AccessPointDetailsAPIDivided*" 
+    | dedup macAddress 
+    | spath output=neighborName path=cdpNeighbors.cdpNeighbor.neighborName 
+    | eval neighborName=if(isnull(neighborName),"Empty",neighborName) 
+    | eval name=if(isnull(name),"Empty",name) 
+    | eval serialNumber=if(isnull(serialNumber),"Empty",serialNumber) 
+    | spath output=apGroupName path=unifiedApInfo.apGroupName 
+    | eval apGroupName=if(isnull(apGroupName),"Empty",apGroupName) 
+    | spath output=controllerIpAddress path=unifiedApInfo.controllerIpAddress 
+    | eval controllerIpAddress =if(isnull(controllerIpAddress ),"Empty",controllerIpAddress ) 
+    | spath output=controllerName path=unifiedApInfo.controllerName 
+    | eval controllerName =if(isnull(controllerName ),"Empty",controllerName ) 
+    | search apGroupName="$ap_group_name$" AND ethernetMac="$ethernet_mac$" AND ipAddress="$ip_address$" AND name="$ap_name$" AND macAddress="$radio_mac_address$" AND serialNumber="$serial_number$" AND neighborName="$neighbor_name$" AND controllerIpAddress="$wlc_ip_address$" AND controllerName=$wlc_name$ 
+    | eval seconds=round(if(isnull(upTime),0, upTime)/1000,0) 
+    | eval seconds=round(if(isnull(upTime),0, upTime)/1000,0) 
+    | eval days=floor(seconds/86400) 
+    | eval seconds=seconds-(days*86400) 
+    | eval hours=floor(seconds/3600) 
+    | eval seconds=seconds-(hours*3600) 
+    | eval minutes=floor(seconds/60) 
+    | eval seconds=seconds-(minutes*60) 
+    | eval hours=if(hours &lt; 10,"0".hours,hours) 
+    | eval minutes=if(minutes &lt; 10,"0".minutes,minutes) 
+    | eval seconds=if(seconds &lt; 10,"0". seconds, seconds) 
+    | eval uptime=if(days &gt; 30," &gt; 30 Days",days.", ".hours.":".minutes.":".seconds)] 
+| stats values(apType) as apType values(serialNumber) as serialNumber values(ethernetMac) as ethernetMac values(ipAddress) as ipAddress values(macAddress) as macAddress values(unifiedApInfo.apGroupName) as unifiedApInfo.apGroupName values(upTime) as upTime values(unifiedApInfo.controllerName) as unifiedApInfo.controllerName values(unifiedApInfo.controllerIpAddress) as unifiedApInfo.controllerIpAddress values(cdpNeighbors.cdpNeighbor.neighborName) as cdpNeighbors.cdpNeighbor.neighborName values(softwareVersion) as softwareVersion values(cdpNeighbors.cdpNeighbor.neighborPort) as cdpNeighbors.cdpNeighbor.neighborPort values(kpi24) as kpi24 values(kpi5) as kpi5 values(status) as status by name 
+| TABLE $fields$ 
+| rename apType as "AP Type", serialNumber as "Serial Number", ethernetMac as "Ethernet MAC", ipAddress as "IP Address", name as "AP Name", macAddress as "Radio MAC Address", "unifiedApInfo.apGroupName" as "AP Group Name", uptime as "Up Time D,H:M:S", "unifiedApInfo.controllerName" as "WLC Name", "unifiedApInfo.controllerIpAddress" as "WLC IP Address", "cdpNeighbors.cdpNeighbor.neighborName" as "Neighbor Name",softwareVersion as "Software Version", "cdpNeighbors.cdpNeighbor.neighborPort" as "Neighbor Port",kpi24 as "ClientCount 2.4GHz", kpi5 as "ClientCount 5GHz" status as "Status" 
+| sort "IPAddress"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</form>
