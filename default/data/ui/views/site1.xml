@@ -1,0 +1,280 @@
+<dashboard script="hide.js" stylesheet="highlight.css" hideSplunkBar="true">
+  <label>Site1</label>
+  <description>WiFi Summary Information</description>
+  <row>
+    <panel>
+      <title>Current Associated WiFi Clients</title>
+      <single>
+        <title>Total number of WiFi clients currently associated across all access points.</title>
+        <search>
+          <query>index="raw_site1"  source="matrix" kpi="clientCount" device="*_Sum" value!=null 
+| stats count,latest(value) AS Associated 
+| eval Associated=if(count==0,0,Associated)
+| fields - count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Current Clients @ 5 GHz</title>
+      <single>
+        <title>Number of WiFi clients currently associated to 5 GHz radios</title>
+        <search>
+          <query>index="raw_site1"  source="matrix" kpi="clientCount_5GHz" device="*_Sum" value!=null | stats count,latest(value) as "Associated" | eval Associated=if(count==0,0,Associated) |  fields - count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Current Clients @ 2.4 GHz</title>
+      <single>
+        <title>Number of WiFi clients currently associated to 2.4 GHz radios</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="clientCount_2.4GHz" device="*_Sum" value!=null | stats count,latest(value) as "Associated" | eval Associated=if(count==0,0,Associated) |  fields - count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Total Traffic across all AP Ethernet interfaces.</title>
+      <single>
+        <title>Total traffic across all AP ethernet interfaces.</title>
+        <search>
+          <query>index="raw_site1" source="matrix" kpi=ethThroughputWLC_*X  device=*_Sum  value!=null 
+| eval localTimeZone = strftime(time(),"%Z")
+| eval _time = case((localTimeZone == "EDT" OR localTimeZone == "EST" OR localTimeZone == "IST"), _time, (localTimeZone == "CDT" OR localTimeZone == "CST"), _time+3600, (localTimeZone == "MDT" OR localTimeZone == "MST"), _time+(3600*2), (localTimeZone == "PDT" OR localTimeZone == "PST"), _time+(3600*3)) 
+| eval dayEvent = strftime(_time,"%Y-%m-%d")
+| eval dayToday = strftime(now(),"%Y-%m-%d")
+| stats avg(value) as value  by kpi 
+| eval localTimeZone = strftime(time(),"%Z")
+| eval todayHours=strftime(now(),"%H") 
+| eval todayHours = case((localTimeZone == "EDT" OR localTimeZone == "EST" OR localTimeZone == "IST"), todayHours, (localTimeZone == "CDT" OR localTimeZone == "CST"), todayHours+1, (localTimeZone == "MDT" OR localTimeZone == "MST"), todayHours+2, (localTimeZone == "PDT" OR localTimeZone == "PST"), todayHours+3) 
+| eval value=((value/8)*todayHours*3600)/1024 
+| fields - todayHours 
+| stats sum(value) as "Total GB"
+| eval "Total GB"=round('Total GB',2)</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="drilldown">none</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="unit">GB</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>RF Bands |  Last 4 Hours</title>
+      <chart>
+        <title>Number of associated client devices by RF band</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount_2.4GHz OR kpi=clientCount_5GHz (NOT kpi=*:*) kpi!=clientCount_state* kpi!=clientCount_probing device="*_Sum" value!=null 
+| replace "clientCount_2.4GHz" with "2.4GHz" in kpi 
+| replace "clientCount_5GHz" with "5GHz" in kpi 
+| timechart latest(value) span=10m as value by kpi 
+| rename kpi as Band 
+| rename value as Value</query>
+          <earliest>-4h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Clients</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisNone</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>SSIDs</title>
+      <chart>
+        <title>Number of client devices by SSID</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount:* value!=null | 
+eval SSID=mvindex(split(kpi,":"),1) | stats latest(value) as value by device, SSID | stats sum(value) as value by SSID| eval value = floor(value)
+ | rename value as Devices</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>AP Ethernet Interface Traffic |  Last 48 Hours</title>
+      <chart>
+        <title>Rate of Traffic recieved &amp; transmitted by all AP ethernet interfaces</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_*X device=*_Sum value!=null value!=0 
+| timechart sum(value) as Mbps by kpi 
+| rename ethThroughputWLC_RX as "Receive(Mbps)", ethThroughputWLC_TX as "Transmit(Mbps)"</query>
+          <earliest>-48h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Mbps</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Channel Utilization |  Last 4 Hours</title>
+      <chart>
+        <title>Average Channel Utilization</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_channelUtilization*  device!=*_Sum* device!=*_Avg* device=* value!=null | timechart span=1h avg(value) as "Avg Channel Utilization" by kpi | rename rf_channelUtilization_2.4GHz as "Channel Utilization (%) 2.4GHz", rf_channelUtilization_5GHz as "Channel Utilization (%) 5GHz"</query>
+          <earliest>-4h@m</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">2.4 GHz Channel</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisNone</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Client Devices</title>
+      <chart>
+        <title>Number of associated and probing Client devices</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount_* (kpi=clientCount_probing OR ((kpi=clientCount_5GHz OR kpi=clientCount_2.4GHz) AND device=*_Sum)) 
+| stats latest(value) as value by kpi 
+| replace "clientCount_2.4GHz" with "Associated 2.4GHz" in kpi 
+| replace "clientCount_5GHz" with "Associated 5GHz" in kpi 
+| replace "clientCount_probing" with "Probing" in kpi 
+| where value&gt;0 
+| rename kpi as Band, value as Value</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="charting.chart">pie</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Client State</title>
+      <chart>
+        <title>Breakup of Client states</title>
+        <search>
+          <query>index=raw_site1 source=matrix kpi=clientCount_State* kpi!=clientCount_State_TOTAL value!=0 value!=null   | eval Client_State=mvindex(split(kpi,"e_"),1)  | stats  latest(value) as value by device,Client_State  | stats  sum(value) as Value by Client_State</query>
+         <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Client Count</title>
+      <chart>
+        <title>The top 10 access points based on the number of client devices associated to both radios</title>
+        <search>
+          <query>index = raw_site1 source="matrix" kpi=clientCount  device!=*_Sum* device!=*_Avg* device!=ATLADMWLC01 device!="*ATL_ADMIN_Sum" device=* value!=null | sort -value | dedup device | head 10  | chart max(value) AS "Client Count" by device | RENAME device AS "Access Point" | sort - "Client Count"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>AP Status &lt; 24 Hours</title>
+      <single>
+        <title>AP's with up time &lt; 24h</title>
+        <search>
+          <query>index=raw_global source="*PRIME_AccessPointDetailsAPIDivided" reachabilityStatus=REACHABLE 
+| dedup name 
+| eval upTime=if(isnull(upTime),0,upTime) 
+| where upTime &lt; 8640000 
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>AP Status &lt; 7 Days</title>
+      <single>
+        <title>AP's connected to WLC for 7 days or less</title>
+        <search>
+          <query>index=raw_global source="*PRIME_AccessPointDetailsAPIDivided" reachabilityStatus=REACHABLE 
+| dedup name 
+| eval upTime=if(isnull(upTime),0,upTime) 
+| where upTime &lt; 60480000 
+| stats count</query>
+         <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>AP's Reachable</title>
+      <single>
+        <title>AP's reachability status : reachable or ping reachable</title>
+        <search>
+          <query>index=raw_global source="*PRIME_AccessPointDetailsAPIDivided" 
+| dedup macAddress 
+| eval reachabilityStatus = if(isnull(reachabilityStatus),"Unknown", reachabilityStatus) 
+| where reachabilityStatus="REACHABLE" OR reachabilityStatus="reachable" OR reachabilityStatus="Ping reachable" 
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
+      <title>AP's Unreachable</title>
+      <single>
+        <title>AP's unreachability status : unreachable or ping unreachable</title>
+        <search>
+          <query>index=raw_global source="*PRIME_AccessPointDetailsAPIDivided"|eval key = 1 | dedup macAddress | stats count(macAddress) as anything | join [|inputlookup devices.csv |eval key = 1| stats count as new by key ] | eval diff = new-anything | table diff</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+                <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+  </row>
+</dashboard>

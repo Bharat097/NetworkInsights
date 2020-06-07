@@ -1,0 +1,105 @@
+<dashboard script="hide.js" hideSplunkBar="true" stylesheet="highlight.css">
+  <label>Throughput</label>
+  <description>Real Time and Recent Data Rates and Traffic Volumes.</description>
+  <fieldset submitButton="false"></fieldset>
+  <row>
+    <panel>
+      <title>Network Traffic rate Entering and Exiting</title>
+      <input type="time" token="tkn_time_1" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>Rate of Traffic received &amp; transmitted to the network point-of-presence</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_*X device=*_Sum value!=null value!=0 | timechart max(value) as Mbps by kpi | rename ethThroughputWLC_RX as "Receive(Mbps)", ethThroughputWLC_TX as "Transmit(Mbps)"</query>
+          <earliest>$tkn_time_1.earliest$</earliest>
+          <latest>$tkn_time_1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">45</option>
+        <option name="charting.axisLabelsY.majorUnit">100</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Mbps</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Total AP Ethernet Throughput</title>
+      <input type="time" token="tkn_time_2" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>Total AP Ethernet Throughput</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC device=*_Sum value!=null value!=0 | timechart max(value) as Throughput</query>
+          <earliest>$tkn_time_2.earliest$</earliest>
+          <latest>$tkn_time_2.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">45</option>
+        <option name="charting.axisLabelsY.majorUnit">100</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Mbps</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>AP Group Throughput</title>
+      <input type="time" token="tkn_time_3" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-7d@d</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>AP Group Throughput per day</title>
+        <search>
+          <query>index=raw_site1 source="matrix" 
+| join type=left device 
+    [| search index=raw_global source="rest://PRIME_AccessPointDetailsAPIDivided*" 
+    | dedup macAddress 
+    | table name,unifiedApInfo.apGroupName 
+    | rename name as device, unifiedApInfo.apGroupName as apGroupName] 
+| eval hourlyTime = strftime(_time,"%Y-%m-%d") 
+| stats avg(value) as value by hourlyTime,device,apGroupName 
+| chart sum(value) as Throughput over hourlyTime by apGroupName span=1d
+| rename hourlyTime as Day</query>
+          <earliest>$tkn_time_3.earliest$</earliest>
+          <latest>$tkn_time_3.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">45</option>
+        <option name="charting.axisLabelsY.majorUnit">200</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.text">Throughput (Mbps)</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.stackMode">stacked100</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+</dashboard>

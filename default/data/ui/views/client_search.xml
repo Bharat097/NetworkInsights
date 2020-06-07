@@ -1,0 +1,72 @@
+<form script="html_input_date_control.js,check_time.js,hide.js" stylesheet="highlight.css" hideSplunkBar="true">
+  <label>Client Search</label>
+  <search>
+    <query>| makeresults 
+ | eval fromDate=strftime(relative_time(now(),"-1d@d"),"%Y-%m-%d") 
+ | eval toDate=strftime(now(),"%Y-%m-%d")</query>
+    <earliest>-1s@s</earliest>
+    <latest>now</latest>
+    <done>
+      <set token="tokFromDate">$result.fromDate$</set>
+      <set token="tokToDate">$result.toDate$</set>
+    </done>
+  </search>
+  <fieldset submitButton="true">
+    <input type="text" token="mac_tkn">
+      <label>MAC Address</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <html>
+      <style>
+        .dateContainer{
+            display:flex;
+          }
+          .dateInput{
+            padding-right:15px;
+          } 
+          #submit{
+          padding-right:300px;
+          }
+        </style>
+      <row>
+        <div class="dateContainer">
+         <div class="dateInput">
+           <div>From Date:</div>
+           <input id="inputFromDate" type="date"/>
+         </div>
+         <br/>
+         <div class="dateInput" style="float:left,padding:50px;">
+           <div>To Date:</div>
+           <input id="inputToDate" type="date"/>
+         </div>
+        </div>
+      </row>
+    </html>
+  </fieldset>
+  <row>
+    <panel depends="tokFromDate">
+      <title>Details</title>
+      <table>
+        <search>
+          <query>index=raw_site1 sourcetype=CMX_VisitorConnect timeformat="%Y-%m-%d:%H:%M:%S" earliest="$tokFromDate$:0:0:0" latest="$tokToDate$:23:59:59"
+| eval connect_lastLogin = strptime(lastLoginTime, "%b %d, %Y %H:%M:%S %p")
+| where (connect_lastLogin &gt;= strptime("$tokFromDate$:0:0:0","%Y-%m-%d:%H:%M:%S")) AND (connect_lastLogin &lt;= strptime("$tokToDate$:23:59:59","%Y-%m-%d:%H:%M:%S"))
+| dedup macAddress
+| eval day = strftime(connect_lastLogin,"%Y-%m-%d")
+| stats  max(bytesSent) as bytesSent, max(bytesReceived) as bytesReceived, values(location/Site) as zoneName, max(Email) as Email, values(device) as Device, values(operatingSystem) as "Operating System" by day ,macAddress
+| sort 0 - day, - bytesSent, - bytesReceived, zoneName
+| rename day as "Date", macAddress as "MAC Address", bytesReceived as "MB Received", bytesSent as "MB Sent", zoneName as "Location"
+| eval "MB Received"='MB Received'/1024/1024
+| eval "MB Sent"='MB Sent'/1024/1024
+| fieldformat "MB Received"=tostring('MB Received',"commas")
+| fieldformat "MB Sent"=tostring('MB Sent',"commas")
+| search "MAC Address"=$mac_tkn$</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</form>

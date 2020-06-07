@@ -1,0 +1,510 @@
+<form script="hide.js" stylesheet="highlight.css" hideSplunkBar="true">
+  <label>Top Access Points</label>
+  <description>Key Performance Indicators</description>
+  <fieldset submitButton="false" autoRun="true"></fieldset>
+  <row>
+    <panel>
+      <title>Client Count</title>
+      <input type="time" token="time_tkn1" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn1" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn1$ Access Points based on the number of client devices associated to both radios</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount  device!=*_Sum* device!=*_Avg* device!="ATLADMWLC01" device=* value!=null | sort -value | dedup device | head $top_access_points_tkn1$  | chart max(value) AS "Client Count" by device | RENAME device AS "Access Point" | sort - "Client Count"</query>
+          <earliest>$time_tkn1.earliest$</earliest>
+          <latest>$time_tkn1.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">466</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Peak CPU Utilization</title>
+      <input type="time" token="time_tkn2" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn2" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn2$ Access Points based on Peak CPU Usage</title>
+        <search>
+          <query> index=raw_site1 source="matrix" kpi=cpuUtilization  device!=*_Sum* device!=*_Avg* device!=localhost device!="ATLADMWLC01" device=* value!=null | sort -value | dedup device | head $top_access_points_tkn2$ | chart max(value) as "CPU (%)" by device | RENAME device AS "Access Point" | sort   - "CPU (%)"</query>
+          <earliest>$time_tkn2.earliest$</earliest>
+          <latest>$time_tkn2.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">466</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Client Count @ 2.4 GHz</title>
+      <input type="time" token="time_tkn3" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn3" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn3$ Access Points based on the number of client devices associated to the 2.4 GHz radio</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount_2.4GHz  device!=*_Sum* device!=*_Avg* value!=null device=* | sort -value | dedup device | head $top_access_points_tkn3$ | chart max(value) AS "Client Count" by device | RENAME device AS "Access Point" | sort -"Client Count"</query>
+          <earliest>$time_tkn3.earliest$</earliest>
+          <latest>$time_tkn3.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">486</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Noise Floor @ 2.4 GHz</title>
+      <input type="time" token="time_tkn4" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn4" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn4$ Access Points based on the RF noise floor for the 2.4 GHz radio</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_noiseFloor_2.4GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head  $top_access_points_tkn4$ | chart max(value) AS "Noise Floor (dBm)" by device | RENAME device AS "Access Point" | sort - "Noise Floor (dBm)"</query>
+          <earliest>$time_tkn4.earliest$</earliest>
+          <latest>$time_tkn4.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">482</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Low SNR Clients @ 2.4 GHz</title>
+      <input type="time" token="time_tkn5" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn5" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn5$ Access Points based on the count of low SNR clients for the 2.4 GHz radio</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_clientLowSNR_2.4GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn5$ | chart max(value) AS "Low SNR Clients" by device | RENAME device AS "Access Point" | sort - "Low SNR Clients"</query>
+          <earliest>$time_tkn5.earliest$</earliest>
+          <latest>$time_tkn5.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">484</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>RF Channel Utilization @ 2.4 GHz</title>
+      <input type="time" token="time_tkn9" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn9" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn9$ Access Points based on 2.4 GHz RF channel Utilization</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_channelUtilization_2.4GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn9$ | chart max(value) AS "Channel Utilization (%)" by device | RENAME device AS "Access Point" | sort - "Channel Utilization (%)"</query>
+          <earliest>$time_tkn9.earliest$</earliest>
+          <latest>$time_tkn9.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">488</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>RF Reciever Load @ 2.4 GHz</title>
+      <input type="time" token="time_tkn10" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn10" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn10$ Access Points based on 2.4 GHz RF reciever Load</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_load_RX_2.4GHz  device!=*_Sum* device!=*_Avg* device=* value!=null| sort -value | dedup device | head $top_access_points_tkn10$ | chart max(value) AS "Receiver Load (%)" by device | RENAME device AS "Access Point" | sort - "Receiver Load (%)"</query>
+          <earliest>$time_tkn10.earliest$</earliest>
+          <latest>$time_tkn10.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">487</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>RF Transmitter Load @ 2.4 GHz</title>
+      <input type="time" token="time_tkn11" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn11" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn11$ Access Points based on 2.4 GHz RF Transmitter Load</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_load_TX_2.4GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn11$ | chart max(value) AS "Transmitter Load (%)" by device | RENAME device AS "Access Point" | sort - "Transmitter Load (%)"</query>
+          <earliest>$time_tkn11.earliest$</earliest>
+          <latest>$time_tkn11.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">485</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Client Count @ 5 GHz</title>
+      <input type="time" token="time_tkn6" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn6" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn6$ Access Points based on the number of client devices associated to the 5 GHz radio</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount_5GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn6$ | chart max(value) AS "Client Count" by device | RENAME device AS "Access Point" | sort - "Client Count"</query>
+          <earliest>$time_tkn6.earliest$</earliest>
+          <latest>$time_tkn6.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">512</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Noise Floor @ 5 GHz</title>
+      <input type="time" token="time_tkn7" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn7" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn7$ Access Points based on the RF noise floor for the 5 GHz radio</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_noiseFloor_5GHz device!=*_Sum* device!=*_Avg* device=* | sort -value | dedup device | head $top_access_points_tkn7$ | chart max(value) AS "Noise Floor (dBm)" by device | RENAME device AS "Access Point" | sort - "Noise Floor (dBm)"</query>
+          <earliest>$time_tkn7.earliest$</earliest>
+          <latest>$time_tkn7.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">513</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Low SNR Clients @ 5 GHz</title>
+      <input type="time" token="time_tkn8" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn8" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn8$ Access Points based on the count of low SNR clients for the 5 GHz radio</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_clientLowSNR_5GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn8$ | chart max(value) AS "Low SNR Clients" by device | RENAME device AS "Access Point" | sort - "Low SNR Clients"</query>
+          <earliest>$time_tkn8.earliest$</earliest>
+          <latest>$time_tkn8.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">514</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>RF Channel Utilization @ 5 GHz</title>
+      <input type="time" token="time_tkn12" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn12" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn12$ Access Points based on 5 GHz RF channel Utilization</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_channelUtilization_5GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn12$ | chart max(value) AS "Channel Utilization (%)" by device | RENAME device AS "Access Point" | sort - "Channel Utilization (%)"</query>
+          <earliest>$time_tkn12.earliest$</earliest>
+          <latest>$time_tkn12.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">548</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>RF Reciever Load @ 5 GHz</title>
+      <input type="time" token="time_tkn13" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn13" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn13$ Access Points based on 5 GHz RF reciever Load</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_load_RX_5GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn13$ | chart max(value) AS "Receiver Load (%)" by device | RENAME device AS "Access Point" | sort - "Receiver Load (%)"</query>
+          <earliest>$time_tkn13.earliest$</earliest>
+          <latest>$time_tkn13.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">549</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>RF Transmitter Load @ 5 GHz</title>
+      <input type="time" token="time_tkn14" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn14" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn14$ Access Points based on 5 GHz RF Transmitter Load</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_load_TX_5GHz  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn14$ | chart max(value) AS "Transmitter Load (%)" by device | RENAME device AS "Access Point" | sort - "Transmitter Load (%)"</query>
+          <earliest>$time_tkn14.earliest$</earliest>
+          <latest>$time_tkn14.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">549</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Ethernet Total Throughput</title>
+      <input type="time" token="time_tkn15" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn15" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn15$ Access Points based on Total Ethernet Traffic</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC  device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn15$ | chart max(value) AS "Total Traffic (Mbps)" by device | RENAME device AS "Access Point" | sort - "Total Traffic (Mbps)"</query>
+          <earliest>$time_tkn15.earliest$</earliest>
+          <latest>$time_tkn15.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">545</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Ethernet Received Throughput</title>
+      <input type="time" token="time_tkn16" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn16" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn16$ Access Points based Received Ethernet Traffic</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_RX  device!=*_Sum* device!=*_Avg* value!=null device=* | sort -value | dedup device | head $top_access_points_tkn16$ | chart max(value) AS "Received Traffic (Mbps)" by device | RENAME device AS "Access Point" | sort - "Received Traffic (Mbps)"</query>
+          <earliest>$time_tkn16.earliest$</earliest>
+          <latest>$time_tkn16.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">545</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Ethernet Transmitted Throughput</title>
+      <input type="time" token="time_tkn17" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-2h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="top_access_points_tkn17" searchWhenChanged="true">
+        <label>Top Access Points</label>
+        <choice value="10">Top 10</choice>
+        <choice value="20">Top 20</choice>
+        <default>20</default>
+      </input>
+      <chart>
+        <title>The Top $top_access_points_tkn17$ Access Points based on Transmmited Ethernet Traffic</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=ethThroughputWLC_TX device!=*_Sum* device!=*_Avg* device=* value!=null | sort -value | dedup device | head $top_access_points_tkn17$ | chart max(value) AS "Transmitted Traffic (Mbps)" by device | RENAME device AS "Access Point" | sort - "Transmitted Traffic (Mbps)"</query>
+          <earliest>$time_tkn17.earliest$</earliest>
+          <latest>$time_tkn17.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">545</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+</form>

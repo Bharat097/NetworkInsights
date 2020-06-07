@@ -1,0 +1,355 @@
+<form script="hide.js" stylesheet="highlight.css" hideSplunkBar="true">
+  <label>Net Conditions</label>
+  <fieldset submitButton="false" autoRun="true"></fieldset>
+  <row>
+    <panel>
+      <title>High CPU Utilization</title>
+      <input type="time" token="tkn_time" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="avg_time" searchWhenChanged="true">
+        <label>Average Over</label>
+        <default>4h</default>
+        <choice value="1h">1 hour</choice>
+        <choice value="2h">2 hours</choice>
+        <choice value="3h">3 hours</choice>
+        <choice value="4h">4 hours</choice>
+        <choice value="5h">5 hours</choice>
+        <initialValue>4h</initialValue>
+      </input>
+      <input type="dropdown" token="utilization" searchWhenChanged="true">
+        <label>Utilization</label>
+        <default>75</default>
+        <choice value="50">&gt;=50 %</choice>
+        <choice value="75">&gt;=75 %</choice>
+        <choice value="100">100 %</choice>
+        <initialValue>75</initialValue>
+      </input>
+      <table>
+        <title>List of access points with high CPU utilizatioin</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=cpuUtilization  device!=*_Sum* device!=*_Avg* value!=null device=*
+| streamstats current=f last(_time) as LastTime by device
+| eval delay=(LastTime-_time)/60
+| fillnull delay value=1
+| bin _time span=$avg_time$
+| stats sum(eval(value*delay)) as value, sum(delay) as delay by device, _time
+| eval value = round(value/delay,0)
+| sort - _time
+| fields - delay, - _time
+| dedup device
+| where value &gt;= $utilization$
+| rename value as "CPU Utilization(%)"</query>
+          <earliest>$tkn_time.earliest$</earliest>
+          <latest>$tkn_time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>High Noise Floor @2.4 GHz | 60 Seconds</title>
+      <single>
+        <title>Number of access points with 2.4 GHz noise greater than -70 dBm</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_noiseFloor_2.4GHz device=* device!=*_Sum* device!=*_Avg* value!=null value&gt;-70 | stats count</query>
+          <earliest>-60s@s</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Noise Floor @ 2.4 GHz</title>
+      <input type="time" token="tkn_time1" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>Average 2.4 GHz noise floor</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_noiseFloor_2.4GHz device!=*_Sum* device!=*_Avg* device=* 
+| timechart limit=5 avg(value) as "Avg Noise" by device useother=f 
+| sort -"Avg Noise"</query>
+          <earliest>$tkn_time1.earliest$</earliest>
+          <latest>$tkn_time1.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Noise Floor @ 2.4 GHz</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Noise Floor @ 5 GHz</title>
+      <input type="time" token="tkn_time2" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>Average 5 GHz noise floor</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=rf_noiseFloor_5GHz device!=*_Sum* device!=*_Avg* device=*
+| timechart limit=5 avg(value) as "Avg Noise" by device useother=f 
+| sort -"Avg Noise"</query>
+          <earliest>$tkn_time2.earliest$</earliest>
+          <latest>$tkn_time2.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.text">Noise Floor @ 5 GHz</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Noise Floor @ 5 GHz</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Probe Rate</title>
+      <input type="time" token="tkn_time3" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>Probe Rate Over Time</title>
+        <search>
+          <query>index=raw_site1 source=matrix kpi=rf_probeRate device=* value!=null | timechart last(value) as "Probe Rate"</query>
+          <earliest>$tkn_time3.earliest$</earliest>
+          <latest>$tkn_time3.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Probe Rate</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Zero Client Access Points @ 2.4GHz</title>
+      <input type="time" token="tkn_time4" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@m</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <table>
+        <title>Access points with no client associated to their 2.4 GHz radio</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="clientCount_2.4GHz" device!=*_Sum* device!=*_Avg* device=* value!=null 
+| stats sum(value) as TotalClients by device 
+| where TotalClients = 0 
+| table device 
+| sort device 
+| Rename device as Device</query>
+          <earliest>$tkn_time4.earliest$</earliest>
+          <latest>$tkn_time4.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Zero Client Access Points @ 5GHz</title>
+      <input type="time" token="tkn_time5" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@m</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <table>
+        <title>Access points with no client associated to their 5 GHz radio</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="clientCount_5GHz" device!=*_Sum* device!=*_Avg* device=* value!=null 
+| stats sum(value) as TotalClients by device 
+| where TotalClients = 0 
+| table device 
+| sort device 
+| Rename device as Device</query>
+          <earliest>$tkn_time5.earliest$</earliest>
+          <latest>$tkn_time5.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Zero Channel Utilization Access Points @ 2.4GHz</title>
+      <input type="time" token="tkn_time6" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@m</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <table>
+        <title>Number of access points 2.4GHz Radios with no channel Utilization</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="rf_channelUtilization_2.4GHz" device!=*_Sum* device!=*_Avg* device=* value!=null 
+| stats sum(value) as TotalCU24 by device 
+| where TotalCU24 = 0 
+| table device 
+| rename device AS Device</query>
+          <earliest>$tkn_time6.earliest$</earliest>
+          <latest>$tkn_time6.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Zero Channel Utilization Access Points @ 5GHz</title>
+      <input type="time" token="tkn_time7" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@m</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <table>
+        <title>Number of access points 5GHz radios with no channel utilization</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi="rf_channelUtilization_5GHz" device!=*_Sum* device!=*_Avg* device=* value!=null 
+| stats sum(value) as TotalCU5 by device 
+| where TotalCU5 = 0 
+| table device 
+| rename device AS Device</query>
+          <earliest>$tkn_time7.earliest$</earliest>
+          <latest>$tkn_time7.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Channel Change Top 10 AP @ 2.4GHz</title>
+      <input type="time" token="tkn_time8" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@m</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>The top 10 access points that have change channels</title>
+        <search>
+          <query>index=raw_site1 sourcetype=log kpi=rf_channel_2.4GHz log_type=kpi device=* message="*value changed from*" 
+| stats count by device 
+| sort -count 
+| head 10 
+| rename device As "Access Point", count As "Count"</query>
+          <earliest>$tkn_time8.earliest$</earliest>
+          <latest>$tkn_time8.latest$</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Access Points</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">285</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Channel Change Top 10 Channels @ 2.4GHz</title>
+      <table>
+        <title>The top 10 channels changed</title>
+        <search>
+          <query>index=raw_site1 sourcetype=log kpi=rf_channel_2.4GHz log_type=kpi device=* message="*value changed from*" 
+| rex "\"message\":\s+\"value changed from\s+(?&lt;channelFrom&gt;\d*)\s+to\s+(?&lt;channelTo&gt;\d*)" 
+| stats count by channelFrom 
+| sort - count 
+| head 10 
+| rename channelFrom as "Channel", count as "Count"</query>
+          <earliest>$tkn_time8.earliest$</earliest>
+          <latest>$tkn_time8.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Channel Change Top 10 AP @ 5GHz</title>
+      <input type="time" token="tkn_time9" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-4h@m</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>The top 10 access points that have change channels</title>
+        <search>
+          <query>index=raw_site1 sourcetype=log kpi=rf_channel_5GHz log_type=kpi device=* message="*value changed from*" 
+| stats count by device 
+| sort -count 
+| head 10 
+| rename device As "Access Point", count As "Count"</query>
+          <earliest>$tkn_time9.earliest$</earliest>
+          <latest>$tkn_time9.latest$</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Access Points</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Channel Change Top 10 Channels @ 5GHz</title>
+      <table>
+        <title>The top 10 channels changed</title>
+        <search>
+          <query>index=raw_site1 sourcetype=log kpi=rf_channel_5GHz log_type=kpi device=* message="*value changed from*" 
+| rex "\"message\":\s+\"value changed from\s+(?&lt;channelFrom&gt;\d*)\s+to\s+(?&lt;channelTo&gt;\d*)" 
+| stats count by channelFrom 
+| sort - count 
+| head 10 
+| rename channelFrom as "Channel", count as "Count"</query>
+          <earliest>$tkn_time9.earliest$</earliest>
+          <latest>$tkn_time9.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,21 @@
+#highlight tr.range-elevated td{
+    background-color: lightgreen !important;
+}
+#highlight tr.range-severe td{
+    background-color: red !important;
+}
+#highlight tr.range-low td{
+    background-color: white !important;
+}
+#highlight td.range-elevated{
+    background-color: lightgreen !important;
+    font-weight: bold;
+}
+#highlight td.range-severe{
+   background-color: red !important;
+   font-style: italic;
+}
+
+.btn-pill{
+display:none !important;
+}

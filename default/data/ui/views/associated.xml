@@ -1,0 +1,50 @@
+<form script="hide.js" stylesheet="highlight.css" hideSplunkBar="true">
+  <label>Associated</label>
+  <description>Client Associated Over Time</description>
+  <fieldset submitButton="false" autoRun="true"></fieldset>
+  <row>
+    <panel>
+      <title>Associated Clients</title>
+      <input type="time" token="tkn_time" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <chart>
+        <title>The number of client devices associated to all access points by RF band</title>
+        <search>
+          <query>index=raw_site1 source="matrix" kpi=clientCount_2.4GHz OR kpi=clientCount_5GHz (NOT kpi=*:*) kpi!=clientCount_state* kpi!=clientCount_probing device="*_Sum" value!=null 
+| replace "clientCount_2.4GHz" with "2.4GHz" in kpi 
+| replace "clientCount_5GHz" with "5GHz" in kpi 
+| timechart latest(value) span=10m as value by kpi 
+| rename kpi as Band 
+| rename value as Value</query>
+          <earliest>$tkn_time.earliest$</earliest>
+          <latest>$tkn_time.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Client Devices</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.fieldColors">{"5GHz": 0xbb99ff, "clientCount_5GHz_band_1": 0xbb99ff, "clientCount_5GHz_band_2": 0xbb99ff}</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="link.visible">0</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+</form>
